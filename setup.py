@@ -2,6 +2,7 @@
 
 import platform
 import sys
+import glob
 from distutils.unixccompiler import UnixCCompiler
 from setuptools import setup, Extension, find_packages
 from setuptools.command.build_ext import build_ext
@@ -19,65 +20,45 @@ class get_pybind_include(object):
 
 ext_modules = []
 
+common_src = glob.glob('external/libyuv/source/*.cc')
+common_inc = [get_pybind_include(), 'external/libyuv/include']
+
 if platform.system() == 'Windows':
     ext_modules.append(
-        Extension('pyvirtualcam._native_windows',
+        Extension('pyvirtualcam._native_windows_obs',
             # Sort input source files to ensure bit-for-bit reproducible builds
             # (https://github.com/pybind/python_example/pull/53)
             sorted([
-                'pyvirtualcam/native_windows/main.cpp',
-                'pyvirtualcam/native_windows/controller/controller.cpp',
-                'pyvirtualcam/native_windows/queue/shared-memory-queue.c',
-                'pyvirtualcam/native_shared/yuv.cpp',
-            ]),
-            include_dirs=[
-                # Path to pybind11 headers
-                get_pybind_include(),
-                'pyvirtualcam/native_windows'
-            ],
-            extra_link_args=[
-                "/DEFAULTLIB:advapi32.lib",
-            ],
+                'pyvirtualcam/native_windows_obs/main.cpp',
+                'pyvirtualcam/native_windows_obs/queue/shared-memory-queue.c',
+            ] + common_src),
+            include_dirs=['pyvirtualcam/native_windows_obs'] + common_inc,
+            extra_link_args=["/DEFAULTLIB:advapi32.lib"],
             language='c++'
         )
     )
 elif platform.system() == 'Darwin':
     ext_modules.append(
-        Extension('pyvirtualcam._native_macos',
+        Extension('pyvirtualcam._native_macos_obs',
             # Sort input source files to ensure bit-for-bit reproducible builds
             # (https://github.com/pybind/python_example/pull/53)
             sorted([
-                'pyvirtualcam/native_macos/main.mm',
-                'pyvirtualcam/native_macos/controller/controller.mm',
-                'pyvirtualcam/native_macos/server/OBSDALMachServer.mm',
-                'pyvirtualcam/native_shared/yuv.cpp',
-            ]),
-            include_dirs=[
-                # Path to pybind11 headers
-                get_pybind_include(),
-                'pyvirtualcam/native_macos'
-            ],
-            extra_link_args=[
-                "-framework", "Foundation",
-            ],
+                'pyvirtualcam/native_macos_obs/main.mm',
+                'pyvirtualcam/native_macos_obs/server/OBSDALMachServer.mm',
+            ] + common_src),
+            include_dirs=['pyvirtualcam/native_macos_obs'] + common_inc,
+            extra_link_args=["-framework", "Foundation"],
             language='objc'
         )
     )
 elif platform.system() == 'Linux':
     ext_modules.append(
-        Extension('pyvirtualcam._native_linux',
+        Extension('pyvirtualcam._native_linux_v4l2loopback',
             # Sort input source files to ensure bit-for-bit reproducible builds
             # (https://github.com/pybind/python_example/pull/53)
-            sorted([
-                'pyvirtualcam/native_linux/main.cpp',
-                'pyvirtualcam/native_linux/controller/controller.cpp',
-                'pyvirtualcam/native_shared/yuv.cpp',
-            ]),
-            include_dirs=[
-                # Path to pybind11 headers
-                get_pybind_include(),
-                'pyvirtualcam/native_linux'
-            ],
+            sorted(['pyvirtualcam/native_linux_v4l2loopback/main.cpp'] + common_src),
+            include_dirs=['pyvirtualcam/native_linux_v4l2loopback'] + common_inc,
+            extra_compile_args=['-flto'],
             language='c++'
         )
     )
@@ -106,25 +87,11 @@ def has_flag(compiler, flagname):
     return True
 
 
-def cpp_flag(compiler):
-    """Return the -std=c++[11/14/17] compiler flag.
-    The newer version is prefered over c++11 (when it is available).
-    """
-    flags = ['-std=c++17', '-std=c++14', '-std=c++11']
-
-    for flag in flags:
-        if has_flag(compiler, flag):
-            return flag
-
-    raise RuntimeError('Unsupported compiler -- at least C++11 support '
-                       'is needed!')
-
-
 class BuildExt(build_ext):
     """A custom build extension for adding compiler-specific options."""
     c_opts = {
-        'msvc': ['/EHsc'],
-        'unix': [],
+        'msvc': ['/EHsc', '/std:c++17'],
+        'unix': ['-std=c++17'],
     }
     l_opts = {
         'msvc': [],
@@ -144,7 +111,6 @@ class BuildExt(build_ext):
         opts = self.c_opts.get(ct, [])
         link_opts = self.l_opts.get(ct, [])
         if ct == 'unix':
-            opts.append(cpp_flag(self.compiler))
             if has_flag(self.compiler, '-fvisibility=hidden'):
                 opts.append('-fvisibility=hidden')
 
@@ -180,7 +146,7 @@ setup(
     ],
     ext_modules=ext_modules,
     packages = find_packages(),
-    setup_requires=['pybind11>=2.5.0'],
+    setup_requires=['pybind11>=2.6.0'],
     install_requires=['numpy'],
     cmdclass={'build_ext': BuildExt},
     zip_safe=False,

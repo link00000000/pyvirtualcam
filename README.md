@@ -17,7 +17,9 @@ with pyvirtualcam.Camera(width=1280, height=720, fps=20) as cam:
         cam.sleep_until_next_frame()
 ```
 
-For more examples, check out the [`samples/`](samples) folder.
+For more examples, including using different pixel formats like BGR, or selecting a specific camera device on Linux, check out the [`samples/`](samples) folder.
+
+See also the [API Documentation](https://letmaik.github.io/pyvirtualcam).
 
 ## Installation
 
@@ -64,5 +66,34 @@ sudo modprobe v4l2loopback devices=1
 
 For further information, see the [v4l2loopback documentation](https://github.com/umlaeute/v4l2loopback).
 
-pyvirtualcam uses the first available v4l2loopback virtual camera it finds.
+If the `device` keyword argument is not given, then pyvirtualcam uses the first available v4l2loopback virtual camera it finds.
 The camera device name can be accessed with `cam.device`.
+
+## Build from source
+
+### Linux/macOS
+
+```sh
+git clone https://github.com/letmaik/pyvirtualcam --recursive
+cd pyvirtualcam
+pip install .
+```
+
+### Windows
+
+These instructions are experimental and support is not provided for them.
+Typically, there should be no need to build manually since wheels are hosted on PyPI.
+
+You need to have Visual Studio installed to build pyvirtualcam.
+
+In a PowerShell window:
+```sh
+$env:PYTHON_VERSION = '3.7'
+$env:PYTHON_ARCH = '64'
+$env:NUMPY_VERSION = '1.14'
+git clone https://github.com/letmaik/pyvirtualcam --recursive
+cd pyvirtualcam
+powershell .github/scripts/build-windows.ps1
+```
+The above will download all build dependencies (including a Python installation)
+and is fully configured through the three environment variables.

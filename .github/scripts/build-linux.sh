@@ -30,8 +30,9 @@ retry ${PYBIN}/pip install numpy==${NUMPY_VERSION}
 ${PYBIN}/pip freeze
 
 # Build pyvirtualcam wheel
+export LDFLAGS="-Wl,--strip-debug"
 rm -rf wheelhouse
-retry ${PYBIN}/pip wheel . -w wheelhouse
+retry ${PYBIN}/pip wheel -v . -w wheelhouse
 
 # Bundle external shared libraries into wheel
 auditwheel repair wheelhouse/pyvirtualcam*.whl -w wheelhouse
@@ -41,7 +42,8 @@ ${PYBIN}/pip install pyvirtualcam --no-index -f wheelhouse
 
 retry ${PYBIN}/pip install -r dev-requirements.txt
 
-pushd $HOME
+mkdir tmp
+pushd tmp
 ${PYBIN}/pytest -v -s /io/test
 popd
 

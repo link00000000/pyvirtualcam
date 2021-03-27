@@ -2,9 +2,14 @@
 *.egg-info
 build
 dist
+dist-docs
 *.pyd
 *.pyc
 *.zip
 *.exe
-obs-virtual-cam
-external/
+.vscode
+tmp
+wheelhouse
+external/miniconda*
+*.png
+*.json

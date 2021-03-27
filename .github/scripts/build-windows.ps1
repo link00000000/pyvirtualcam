@@ -22,12 +22,9 @@ function Init-VS {
     # setuptools automatically selects the right compiler for building
     # the extension module. The following is mostly for building any
     # dependencies like libraw.
-    # FIXME choose matching VC++ compiler, maybe using -vcvars_ver
-    #   -> dependencies should not be built with newer compiler than Python itself
     # https://docs.microsoft.com/en-us/cpp/build/building-on-the-command-line
     # https://docs.microsoft.com/en-us/cpp/porting/binary-compat-2015-2017
 
-    $VS2015_ROOT = "C:\Program Files (x86)\Microsoft Visual Studio 14.0"
     $VS2017_ROOT = "C:\Program Files (x86)\Microsoft Visual Studio\2017"
     $VS2019_ROOT = "C:\Program Files (x86)\Microsoft Visual Studio\2019"
 
@@ -41,12 +38,7 @@ function Init-VS {
         if ($PYTHON_VERSION_MINOR -le '4') {
             throw ("Python <= 3.4 unsupported: $env:PYTHON_VERSION")
         }
-        if (exists $VS2015_ROOT) {
-            $VS_VERSION = "2015"
-            $VS_ROOT = $VS2015_ROOT
-		    $VS_INIT_CMD = "$VS_ROOT\VC\vcvarsall.bat"
-		    $VS_INIT_ARGS = "$VS_ARCH"
-        } elseif (exists $VS2017_ROOT) {
+        if (exists $VS2017_ROOT) {
             $VS_VERSION = "2017"
             if (exists "$VS2017_ROOT\Enterprise") {
                 $VS_ROOT = "$VS2017_ROOT\Enterprise"
@@ -83,6 +75,12 @@ function Init-VS {
     }
 }
 
+function HasCondaEnv($name) {
+    $env_base = conda info --base
+    $env_dir = "$env_base/envs/$name"
+    return (Test-Path $env_dir)
+}
+
 if (!$env:PYTHON_VERSION) {
     throw "PYTHON_VERSION env var missing, must be x.y"
 }
@@ -102,10 +100,11 @@ $env:CONDA_ROOT = $pwd.Path + "\external\miniconda_$env:PYTHON_ARCH"
 
 & $env:CONDA_ROOT\shell\condabin\conda-hook.ps1
 
-exec { conda update --yes -n base -c defaults conda }
-
-exec { conda create --yes --name pyenv_build python=$env:PYTHON_VERSION numpy=$env:NUMPY_VERSION --force }
-exec { conda activate pyenv_build }
+if (-not (HasCondaEnv pyenv_build_$env:PYTHON_VERSION)) {
+    exec { conda update --yes -n base -c defaults conda }
+    exec { conda create --yes --name pyenv_build_$env:PYTHON_VERSION python=$env:PYTHON_VERSION numpy=$env:NUMPY_VERSION --force }
+}
+exec { conda activate pyenv_build_$env:PYTHON_VERSION }
 
 # Check that we have the expected version and architecture for Python
 exec { python --version }
@@ -125,12 +124,14 @@ exec { conda deactivate }
 
 # Import test on a minimal environment
 # (to catch DLL issues)
-exec { conda create --yes --name pyenv_minimal python=$env:PYTHON_VERSION --force }
-exec { conda activate pyenv_minimal }
+if (-not (HasCondaEnv pyenv_minimal_$env:PYTHON_VERSION)) {
+    exec { conda create --yes --name pyenv_minimal_$env:PYTHON_VERSION python=$env:PYTHON_VERSION --force }
+}
+exec { conda activate pyenv_minimal_$env:PYTHON_VERSION }
 
 # Avoid using in-source package
-New-Item -Force -ItemType directory tmp_for_test | out-null
-cd tmp_for_test
+New-Item -Force -ItemType directory tmp | out-null
+cd tmp
 
 python -m pip uninstall -y pyvirtualcam
 ls ..\dist\*.whl | % { exec { python -m pip install $_ } }
@@ -140,22 +141,25 @@ exec { python -c "import pyvirtualcam" }
 exec { conda deactivate }
 
 # Unit tests
-exec { conda create --yes --name pyenv_test python=$env:PYTHON_VERSION numpy --force }
-exec { conda activate pyenv_test }
+if (-not (HasCondaEnv pyenv_test_$env:PYTHON_VERSION)) {
+    exec { conda create --yes --name pyenv_test_$env:PYTHON_VERSION python=$env:PYTHON_VERSION numpy --force }
+}   
+exec { conda activate pyenv_test_$env:PYTHON_VERSION }
 
 # Check that we have the expected version and architecture for Python
 exec { python --version }
 exec { python -c "import struct; assert struct.calcsize('P') * 8 == $env:PYTHON_ARCH" }
 exec { python -c "import sys; print(sys.prefix)" }
 
+# Install test helper package
+Push-Location ../test/win-dshow-capture
+exec { python -u setup.py bdist_wheel }
+python -m pip uninstall -y pyvirtualcam_win_dshow_capture
+ls dist\*.whl | % { exec { python -m pip install $_ } }
+Pop-Location
+
 # output what's installed
 exec { python -m pip freeze }
-
-# Pretend we actually installed OBS and the virtual camera.
-# This is all that's needed to make our backend happy.
-if ($env:CI -eq "true") {
-    New-Item -Path HKLM:\Software\Classes\CLSID -Name "{A3FCE0F5-3493-419F-958A-ABA1250EC20B}"
-}
 
 python -m pip uninstall -y pyvirtualcam
 ls ..\dist\*.whl | % { exec { python -m pip install $_ } }
