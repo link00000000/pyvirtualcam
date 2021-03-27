@@ -14,6 +14,7 @@ cd media_build
 disable=(
     "VIDEO_VIA_CAMERA"
     "VIDEO_OV9650"
+    "VIDEO_OV772X"
     "SOC_CAMERA"
 )
 after_line="# These options should default to off"
