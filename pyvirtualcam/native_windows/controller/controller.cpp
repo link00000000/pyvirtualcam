@@ -41,6 +41,9 @@ static uint64_t get_timestamp_ns()
 
 bool virtual_output_start(int width, int height, double fps, int delay)
 {
+	++process_count;
+	printf("Process count: %d\n", process_count);
+
     if (output_running) {
         fprintf(stderr, "virtual camera output already started\n");
         return false;
