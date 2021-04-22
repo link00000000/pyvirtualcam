@@ -10,9 +10,9 @@ bool shared_queue_create(share_queue* q, int mode, int format,
 		return false;
 	}
 
-	if (!shared_queue_check(mode)) {
-		fprintf(stderr, "shared_queue_check() failed\n");
-		return false;
+	bool queue_already_exists = !shared_queue_check(mode);
+	if(queue_already_exists) {
+		fprintf(stderr, "Warning! Shared queue already exists, attempting to use pre-existing queue.");
 	}
 
 	int frame_size = 0;
@@ -25,8 +25,17 @@ bool shared_queue_create(share_queue* q, int mode, int format,
 	}
 	int buffer_size = sizeof(queue_header) + (sizeof(frame_header) + 
 		frame_size) * qlength;
-	q->hwnd = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, 
-		PAGE_READWRITE, 0, buffer_size, name);
+
+	if(!queue_already_exists) {
+		// Reuse all queue
+		fprintf(stderr, "Reuse old queue");
+		q->hwnd = OpenFileMappingA(FILE_MAP_ALL_ACCESS, FALSE, name);
+	} else {
+		// Create new queue
+		fprintf(stderr, "Create new queue");
+		q->hwnd = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, 
+			PAGE_READWRITE, 0, buffer_size, name);
+	}
 
 	if (!q->hwnd) {
 		PrintLastError();
