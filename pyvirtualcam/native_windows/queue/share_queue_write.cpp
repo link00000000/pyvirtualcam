@@ -30,6 +30,15 @@ bool shared_queue_create(share_queue* q, int mode, int format,
 		// Reuse old queue
 		fprintf(stderr, "Reusing old queue.\n");
 		q->hwnd = OpenFileMappingA(FILE_MAP_ALL_ACCESS, FALSE, name);
+
+		if(!q->hwnd) {
+			fprintf(stderr, "Failed to use old queue.\n");
+
+			// Create new queue
+			fprintf(stderr, "Creating new queue in shared memory.\n");
+			q->hwnd = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, 
+				PAGE_READWRITE, 0, buffer_size, name);
+		}
 	} else {
 		// Create new queue
 		fprintf(stderr, "Creating new queue in shared memory.\n");
