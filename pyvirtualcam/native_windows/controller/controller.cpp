@@ -42,7 +42,6 @@ static uint64_t get_timestamp_ns()
 bool virtual_output_start(int width, int height, double fps, int delay)
 {
 	++process_count;
-	printf("Process count: %d\n", process_count);
 
     if (output_running) {
         fprintf(stderr, "virtual camera output already started\n");
@@ -81,7 +80,6 @@ void virtual_output_stop()
 	}	
 
 	--process_count;
-	printf("Process count: %d\n", process_count);
 
 	// Free shared queue if this is the last process to exit
 	if(process_count == 0) {

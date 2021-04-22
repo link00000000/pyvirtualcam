@@ -12,7 +12,7 @@ bool shared_queue_create(share_queue* q, int mode, int format,
 
 	bool shared_queue_handle_exists = !shared_queue_check(mode);
 	if (shared_queue_handle_exists) {
-		fprintf(stderr, "Warning! Shared queue already exists, attempting to use pre-existing queue.\n");
+		// fprintf(stderr, "Warning! Shared queue already exists, attempting to use pre-existing queue.\n");
 	}
 
 	int frame_size = 0;
@@ -187,7 +187,6 @@ bool shared_queue_check(int mode)
 	hwnd = OpenFileMappingA(FILE_MAP_ALL_ACCESS, FALSE, name);
 
 	if (hwnd) {
-		fprintf(stderr, "%s handle exists already\n", name);
 		CloseHandle(hwnd);
 		return false;
 	} else
