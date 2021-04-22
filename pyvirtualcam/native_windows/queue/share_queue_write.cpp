@@ -10,9 +10,9 @@ bool shared_queue_create(share_queue* q, int mode, int format,
 		return false;
 	}
 
-	if (!shared_queue_check(mode)) {
-		fprintf(stderr, "shared_queue_check() failed\n");
-		return false;
+	bool shared_queue_handle_exists = !shared_queue_check(mode);
+	if (shared_queue_handle_exists) {
+		fprintf(stderr, "Warning! Shared queue already exists, attempting to use pre-existing queue.\n");
 	}
 
 	int frame_size = 0;
