@@ -1,5 +1,9 @@
 # pyvirtualcam
 
+**NOTE**: This is for use in [https://github.com/link00000000/mimic](link00000000/mimic) and is *not* intended to be used outside of the project.
+
+## Original README
+
 NOTE: This package is a work-in-progress. No support is provided, use at own risk.
 
 ## Usage
