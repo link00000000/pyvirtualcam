@@ -25,8 +25,15 @@ bool shared_queue_create(share_queue* q, int mode, int format,
 	}
 	int buffer_size = sizeof(queue_header) + (sizeof(frame_header) + 
 		frame_size) * qlength;
-	q->hwnd = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, 
-		PAGE_READWRITE, 0, buffer_size, name);
+
+	if (!shared_queue_handle_exists) {
+		// Reuse old queue
+		fprintf(stderr, "Reusing old queue.\n");
+		q->hwnd = OpenFileMappingA(FILE_MAP_ALL_ACCESS, FALSE, name);
+	} else {
+		q->hwnd = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, 
+			PAGE_READWRITE, 0, buffer_size, name);
+	}
 
 	if (!q->hwnd) {
 		PrintLastError();
