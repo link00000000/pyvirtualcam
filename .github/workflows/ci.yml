@@ -12,9 +12,9 @@ jobs:
                     # https://github.community/t5/GitHub-Actions/Microsoft-Visual-C-14-0-compiler-not-available-on-Windows-2019/m-p/32871
                     - os-image: windows-2016
                       os-name: windows
-                      python-version: '3.6'
+                      python-version: '3.9'
                       python-arch: '64'
-                      numpy-version: '1.11'
+                      numpy-version: '1.19'
 
         runs-on: ${{ matrix.config.os-image }}
 
