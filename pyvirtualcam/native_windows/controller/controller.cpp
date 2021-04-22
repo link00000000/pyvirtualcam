@@ -79,7 +79,15 @@ void virtual_output_stop()
     if (!output_running) {
         return;
 	}	
-	shared_queue_write_close(&virtual_out->video_queue);
+
+	--process_count;
+	printf("Process count: %d\n", process_count);
+
+	// Free shared queue if this is the last process to exit
+	if(process_count == 0) {
+		shared_queue_write_close(&virtual_out->video_queue);
+	}
+
     free(virtual_out);
 	output_running = false;
 }
