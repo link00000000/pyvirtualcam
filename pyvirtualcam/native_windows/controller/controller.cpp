@@ -2,6 +2,12 @@
 #include "queue/share_queue.h"
 #include "queue/share_queue_write.h"
 #include "controller.h"
+#include <winbase.h>
+
+#pragma data_seg(".mysegmentnamewinapimutextest") 
+INT process_count = 0;
+#pragma data_seg()
+#pragma comment(linker, "/section:.mysegmentnamewinapimutextest,rws")
 
 struct virtual_out_data {
 	share_queue video_queue;
