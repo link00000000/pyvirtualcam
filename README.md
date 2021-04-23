@@ -1,6 +1,6 @@
 # pyvirtualcam
 
-**NOTE**: This is for use in [https://github.com/link00000000/mimic](link00000000/mimic) and is *not* intended to be used outside of the project.
+**NOTE**: This is for use in [link00000000/mimic](https://github.com/link00000000/mimic) and is *not* intended to be used outside of the project.
 
 ## Original README
 
